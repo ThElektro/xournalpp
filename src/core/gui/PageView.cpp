@@ -203,13 +203,7 @@ void XojPageView::startText(double x, double y) {
     this->xournal->getControl()->getSearchBar()->showSearchBar(false);
 
     if (this->textEditor != nullptr) {
-        Text* text = this->textEditor->getText();
-        GdkRectangle matchRect = {gint(x), gint(y), 1, 1};
-        if (!text->intersectsArea(&matchRect)) {
-            endText();
-        } else {
-            this->textEditor->mousePressed(x - text->getX(), y - text->getY());
-        }
+        this->textEditor->mousePressed(x, y, this);
     }
 
     if (this->textEditor == nullptr) {
@@ -258,6 +252,8 @@ void XojPageView::startText(double x, double y) {
             text->setFont(oldtext->getFont());
             this->xournal->getControl()->getWindow()->setFontButtonFont(oldtext->getFont());
             text->setText(oldtext->getText());
+            text->setFixedWidth(oldtext->isFixedWidth());
+            text->setWidth(oldtext->getElementWidth());
             text->setTimestamp(oldtext->getTimestamp());
             text->setAudioFilename(oldtext->getAudioFilename());
 
@@ -269,7 +265,7 @@ void XojPageView::startText(double x, double y) {
 
         this->textEditor = new TextEditor(this, xournal->getWidget(), text, ownText);
         if (!ownText) {
-            this->textEditor->mousePressed(x - text->getX(), y - text->getY());
+            this->textEditor->mousePressed(x, y, this);
         }
 
         this->rerenderElement(text);
@@ -536,7 +532,7 @@ auto XojPageView::onMotionNotifyEvent(const PositionInputData& pos) -> bool {
         cursor->setInvisible(false);
 
         Text* text = this->textEditor->getText();
-        this->textEditor->mouseMoved(x - text->getX(), y - text->getY());
+        this->textEditor->mouseMoved(x, y, this);
     } else if (h->getToolType() == TOOL_ERASER && h->getEraserType() != ERASER_TYPE_WHITEOUT && this->inEraser) {
         this->eraser->erase(x, y);
     }

@@ -125,6 +125,27 @@ auto LoadHandlerHelper::getAttribDouble(const char* name, LoadHandler* loadHandl
     return val;
 }
 
+auto LoadHandlerHelper::getAttribDouble(const char* name, bool optional, LoadHandler* loadHandler, double& rValue) -> bool {
+    const char* attrib = getAttrib(name, optional, loadHandler);
+
+    if (attrib == nullptr) {
+        if(!optional) {
+            g_warning("Parser: attribute %s not found!", name);
+        }
+        return false;
+    }
+
+    char* ptr = nullptr;
+    double val = g_ascii_strtod(attrib, &ptr);
+    if (ptr == attrib) {
+        error("%s", FC(_F("Attribute \"{1}\" could not be parsed as double, the value is \"{2}\"") % name % attrib));
+    }
+
+    rValue = val;
+
+    return true;
+}
+
 auto LoadHandlerHelper::getAttribInt(const char* name, LoadHandler* loadHandler) -> int {
     const char* attrib = getAttrib(name, false, loadHandler);
 

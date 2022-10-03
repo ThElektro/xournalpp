@@ -173,6 +173,7 @@ private:
 
     friend const char* LoadHandlerHelper::getAttrib(const char* name, bool optional, LoadHandler* loadHandler);
     friend double LoadHandlerHelper::getAttribDouble(const char* name, LoadHandler* loadHandler);
+    friend bool LoadHandlerHelper::getAttribDouble(const char* name, bool optional, LoadHandler* loadhandler, double& rValue);
     friend int LoadHandlerHelper::getAttribInt(const char* name, LoadHandler* loadHandler);
     friend bool LoadHandlerHelper::getAttribInt(const char* name, bool optional, LoadHandler* loadHandler, int& rValue);
     friend size_t LoadHandlerHelper::getAttribSizeT(const char* name, LoadHandler* loadHandler);

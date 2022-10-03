@@ -1,6 +1,7 @@
 #include "Text.h"
 
 #include <utility>  // for move
+#include <cmath>    // for std::ceil, std::floor
 
 #include <glib.h>  // for g_warning
 
@@ -12,6 +13,7 @@
 #include "util/serializing/ObjectInputStream.h"   // for ObjectInputStream
 #include "util/serializing/ObjectOutputStream.h"  // for ObjectOutputStream
 #include "view/TextView.h"                        // for TextView
+#include "gui/TextEditor.h"                       // for PADDING_IN_PIXELS, BORDER_WIDTH_IN_PIXELS
 
 using xoj::util::Rectangle;
 
@@ -35,6 +37,7 @@ auto Text::clone() const -> Element* {
     text->snappedBounds = this->snappedBounds;
     text->sizeCalculated = this->sizeCalculated;
     text->inEditing = this->inEditing;
+    text->fixedWidth = this->fixedWidth;
 
     return text;
 }
@@ -56,7 +59,10 @@ void Text::setText(std::string text) {
 }
 
 void Text::calcSize() const {
-    xoj::view::TextView::calcSize(this, this->width, this->height);
+    if (this->fixedWidth)
+        xoj::view::TextView::calcHeight(this, this->height);
+    else
+        xoj::view::TextView::calcSize(this, this->width, this->height);
     this->updateSnapping();
 }
 
@@ -87,15 +93,22 @@ void Text::scale(double x0, double y0, double fx, double fy, double rotation,
     this->y *= fy;
     this->y += y0;
 
+    if (this->fixedWidth) {
+        this->width *= fx;
+    }
+
     double size = this->font.getSize() * fx;
     this->font.setSize(size);
-
     calcSize();
 }
 
 void Text::rotate(double x0, double y0, double th) {}
 
 auto Text::isInEditing() const -> bool { return this->inEditing; }
+
+void Text::setFixedWidth(bool fixedWidth) { this->fixedWidth = fixedWidth; }
+
+auto Text::isFixedWidth() const -> bool { return this->fixedWidth; }
 
 auto Text::rescaleOnlyAspectRatio() -> bool { return true; }
 
@@ -121,6 +134,9 @@ void Text::serialize(ObjectOutputStream& out) const {
 
     font.serialize(out);
 
+    out.writeDouble(static_cast<double>(this->width));
+    out.writeInt(static_cast<int>(this->fixedWidth));
+
     out.endObject();
 }
 
@@ -132,6 +148,9 @@ void Text::readSerialized(ObjectInputStream& in) {
     this->text = in.readString();
 
     font.readSerialized(in);
+
+    this->width = in.readDouble();
+    this->fixedWidth = static_cast<bool>(in.readInt());
 
     in.endObject();
 }

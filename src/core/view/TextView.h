@@ -37,6 +37,11 @@ public:
     static void calcSize(const Text* t, double& width, double& height);
 
     /**
+     * Calculates the height of a Text model with fixed width
+     */
+    static void calcHeight(const Text* t, double& height);
+
+    /**
      * Searches text within a Text model
      */
     static std::vector<XojPdfRectangle> findText(const Text* t, std::string& search);

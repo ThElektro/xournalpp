@@ -23,6 +23,7 @@ bool parseColor(const char* text, Color& color, LoadHandler* loadHandler);
 
 const char* getAttrib(const char* name, bool optional, LoadHandler* loadHandler);
 double getAttribDouble(const char* name, LoadHandler* loadHandler);
+bool getAttribDouble(const char* name, bool optional, LoadHandler* loadHandler, double& rValue);
 int getAttribInt(const char* name, LoadHandler* loadHandler);
 bool getAttribInt(const char* name, bool optional, LoadHandler* loadHandler, int& rValue);
 size_t getAttribSizeT(const char* name, LoadHandler* loadHandler);

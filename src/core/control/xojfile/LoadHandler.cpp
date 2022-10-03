@@ -663,6 +663,11 @@ void LoadHandler::parseText() {
     double fontSize = LoadHandlerHelper::getAttribDouble("size", this);
     double x = LoadHandlerHelper::getAttribDouble("x", this);
     double y = LoadHandlerHelper::getAttribDouble("y", this);
+    double width;
+    if (LoadHandlerHelper::getAttribDouble("width", true, this, width)) {
+        this->text->setFixedWidth(true);
+        this->text->setWidth(width);
+    }
 
     this->text->setX(x);
     this->text->setY(y);

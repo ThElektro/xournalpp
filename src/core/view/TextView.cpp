@@ -30,6 +30,13 @@ auto TextView::initPango(cairo_t* cr, const Text* t) -> PangoLayout* {
 
     pango_context_set_matrix(pango_layout_get_context(layout), nullptr);
     updatePangoFont(layout, t);
+
+    // Set text wrap width if the text has fixed width.
+    if (t->isFixedWidth())
+        pango_layout_set_width(layout, static_cast<int>(t->getElementWidth() * PANGO_SCALE));
+    
+    pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
+    
     return layout;
 }
 
@@ -133,3 +140,9 @@ void TextView::calcSize(const Text* t, double& width, double& height) {
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
 }
+
+void TextView::calcHeight(const Text* t, double& height) {
+    double tmp;
+    calcSize(t, tmp, height);
+}
+

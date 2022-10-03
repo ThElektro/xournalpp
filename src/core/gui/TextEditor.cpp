@@ -628,18 +628,40 @@ void TextEditor::markPos(double x, double y, bool extendSelection) {
     repaintCursor();
 }
 
-void TextEditor::mousePressed(double x, double y) {
-    this->mouseDown = true;
-    markPos(x, y, false);
+void TextEditor::mousePressed(double x, double y, XojPageView* page) {
+    xoj::util::Rectangle<double> matchRect(x, y, 1, 1);
+    
+    if (matchRect.intersects(this->previousBoundingBox)) {
+        this->mouseDown = true;
+        markPos(x - this->text->getX(), y - this->text->getY(), false);
+    } else if (matchRect.intersects(this->getPreviousBoundingBoxWithPadding())) {
+        this->text->setFixedWidth(true);
+        this->resizing = true;
+        
+        //Update wrap width in the pango layout
+        pango_layout_set_width(layout, static_cast<int>(this->text->getElementWidth() * PANGO_SCALE));
+    } else {
+        page->endText();
+    };
+
 }
 
-void TextEditor::mouseMoved(double x, double y) {
+void TextEditor::mouseMoved(double x, double y, XojPageView* page) {
+    const double dX = x - this->text->getX();
+    const double dY = y - this->text->getY();
+
     if (this->mouseDown) {
-        markPos(x, y, true);
+        markPos(dX, dY, true);
+    } else if (this->resizing) {
+        const double new_width = x - this->text->getX();
+        this->text->setWidth(std::max(new_width, TextEditor::MIN_TEXT_WIDTH*this->text->getFontSize()));
+        // Update wrap width in the pango layout
+        pango_layout_set_width(layout, static_cast<int>(this->text->getElementWidth() * PANGO_SCALE));
+        this->repaintEditor();
     }
 }
 
-void TextEditor::mouseReleased() { this->mouseDown = false; }
+void TextEditor::mouseReleased() { this->mouseDown = false; this->resizing = false; }
 
 void TextEditor::jumpALine(GtkTextIter* textIter, int count) {
     int cursorLine = gtk_text_iter_get_line(textIter);
@@ -964,11 +986,11 @@ auto TextEditor::computeBoundingRect() -> xoj::util::Rectangle<double> {
     PangoLayout* pl = xoj::view::TextView::initPango(cr, textElement);
 
     setTextToPangoLayout(pl);
-
+    
     int w = 0;
     int h = 0;
     pango_layout_get_size(pl, &w, &h);
-    double width = (static_cast<double>(w)) / PANGO_SCALE;
+    double width = this->text->isFixedWidth() ? this->text->getElementWidth() : (static_cast<double>(w)) / PANGO_SCALE;
     double height = (static_cast<double>(h)) / PANGO_SCALE;
     g_object_unref(pl);
 
@@ -978,15 +1000,21 @@ auto TextEditor::computeBoundingRect() -> xoj::util::Rectangle<double> {
     return xoj::util::Rectangle<double>(textElement->getX(), textElement->getY(), width, height);
 }
 
+auto TextEditor::getPreviousBoundingBoxWithPadding() -> xoj::util::Rectangle<double> {
+    const double zoom = this->gui->getXournal()->getZoom();
+    const double padding = (BORDER_WIDTH_IN_PIXELS + PADDING_IN_PIXELS) / zoom;
+    return xoj::util::Rectangle<double>(this->previousBoundingBox.x - padding, this->previousBoundingBox.y - padding,
+                           this->previousBoundingBox.width + 2.0 * padding,
+                           this->previousBoundingBox.height + 2.0 * padding);
+
+}
+
 
 void TextEditor::repaintEditor() {
     auto rect = this->computeBoundingRect();
     this->previousBoundingBox.unite(rect);
-    const double zoom = this->gui->getXournal()->getZoom();
-    const double padding = (BORDER_WIDTH_IN_PIXELS + PADDING_IN_PIXELS) / zoom;
-    this->gui->repaintRect(this->previousBoundingBox.x - padding, this->previousBoundingBox.y - padding,
-                           this->previousBoundingBox.width + 2.0 * padding,
-                           this->previousBoundingBox.height + 2.0 * padding);
+    auto rectWithPadding = getPreviousBoundingBoxWithPadding();
+    this->gui->repaintRect(rectWithPadding.x, rectWithPadding.y, rectWithPadding.width, rectWithPadding.height);
     this->previousBoundingBox = rect;
 }
 
@@ -1080,7 +1108,8 @@ void TextEditor::paint(cairo_t* cr, double zoom) {
     int w = 0;
     int h = 0;
     pango_layout_get_size(this->layout, &w, &h);
-    double width = (static_cast<double>(w)) / PANGO_SCALE;
+    //Only calculate width if the text doesn't have a fixed width.
+    double width = this->text->isFixedWidth() ? this->text->getElementWidth() : (static_cast<double>(w)) / PANGO_SCALE;
     double height = (static_cast<double>(h)) / PANGO_SCALE;
 
 
@@ -1125,8 +1154,10 @@ void TextEditor::paint(cairo_t* cr, double zoom) {
     // cursorRect.height = static_cast<int>(zoom * height + 20);
     // // This is also useful, so it is good to make it user's preference.
     gtk_im_context_set_cursor_location(this->imContext, &cursorRect);
-
-    this->text->setWidth(width);
+    
+    if (this->text->isFixedWidth())
+        this->text->setWidth(width);
+    
     this->text->setHeight(height);
 
     if (this->markPosQueue) {

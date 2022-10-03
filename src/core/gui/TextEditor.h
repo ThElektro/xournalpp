@@ -58,8 +58,8 @@ public:
     Text* getText();
     void textCopyed();
 
-    void mousePressed(double x, double y);
-    void mouseMoved(double x, double y);
+    void mousePressed(double x, double y, XojPageView* page);
+    void mouseMoved(double x, double y, XojPageView* page);
     void mouseReleased();
 
     UndoAction* getFirstUndoAction();
@@ -77,6 +77,8 @@ private:
     void setTextToPangoLayout(PangoLayout* pl) const;
 
     xoj::util::Rectangle<double> computeBoundingRect();
+    xoj::util::Rectangle<double> getPreviousBoundingBoxWithPadding();
+
     void repaintEditor();
     void drawCursor(cairo_t* cr, double x, double y, double height, double zoom);
     void repaintCursor();
@@ -144,9 +146,12 @@ private:
     bool mouseDown = false;
     bool cursorOverwrite = false;
     bool cursorVisible = false;
+    bool resizing = false;
 
     // Padding between the text logical box and the frame
-    static constexpr int PADDING_IN_PIXELS = 5;
+    static constexpr int PADDING_IN_PIXELS = 10;
     // Width of the lines making the frame
-    static constexpr int BORDER_WIDTH_IN_PIXELS = 1;
+    static constexpr int BORDER_WIDTH_IN_PIXELS = 3;
+    // Minimum width of a fixed width text divided by font size.
+    static constexpr double MIN_TEXT_WIDTH = 5;
 };

@@ -180,6 +180,9 @@ void SaveHandler::visitLayer(XmlNode* page, Layer* l) {
             text->setAttrib("x", t->getX());
             text->setAttrib("y", t->getY());
             text->setAttrib("color", getColorStr(t->getColor()).c_str());
+            
+            if (t->isFixedWidth())
+                text->setAttrib("width", t->getElementWidth());
 
             writeTimestamp(t, text);
         } else if (e->getType() == ELEMENT_IMAGE) {

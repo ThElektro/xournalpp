@@ -40,6 +40,9 @@ public:
     void setInEditing(bool inEditing);
     bool isInEditing() const;
 
+    void setFixedWidth(bool fixedWidth);
+    bool isFixedWidth() const;
+
     void scale(double x0, double y0, double fx, double fy, double rotation, bool restoreLineWidth) override;
     void rotate(double x0, double y0, double th) override;
 
@@ -68,4 +71,5 @@ private:
     std::string text;
 
     bool inEditing = false;
+    bool fixedWidth = false;
 };
